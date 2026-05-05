@@ -89,7 +89,7 @@ html_tabla = df_tabla.to_html(classes='table table-hover', index=False)
 # Guardamos el archivo para descargarlo
 with open("mi_analisis.html", "w") as f:
     f.write(f"<html><head><link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'></head><body><div class='container'><h1>Análisis de Confección</h1>{html_tabla}</div></body></html>")
-  import plotly.express as px
+import plotly.express as px
 
 fig = px.line(df_tabla, x="Año", y="Indice", title="Índice confección por año (Interactivo)", markers=True)
 fig.show()
