@@ -115,7 +115,6 @@ Esto podría estar relacionado con:
 
 El comportamiento sugiere una posible **debilidad estructural** en la industria de confección en México.
 """)
-
 # ==============================
 # 1. IMPORTS
 # ==============================
@@ -137,7 +136,7 @@ st.set_page_config(
 # 3. TÍTULO
 # ==============================
 
-st.title("Análisis de la industria textil y confección en México (2018–2024)")
+st.title("Análisis de la industria textil (2018–2024)")
 
 st.markdown("""
 Este análisis compara el comportamiento de:
@@ -296,7 +295,7 @@ df_textil_long["Año"] = (
 
 # solo hasta 2024
 df_textil_clean = df_textil_long[
-    df_textil_long["Año"] <= 2024
+    df_textil_long["Año"] <= 2023
 ]
 
 # agrupar
@@ -461,13 +460,308 @@ st.markdown("""
 - cambios en consumo post-pandemia
 - pérdida de competitividad industrial
 
-## Próximos pasos
-
-Se incorporarán:
-
-- exportaciones BANXICO
-- empleo manufacturero
-- comparación con importaciones
-- análisis del impacto del fast fashion
 """)
+# =========================================================
+# COMERCIO EXTERIOR
+# EXPORTACIONES VS IMPORTACIONES
+# INDUSTRIA DE PRENDAS EN MÉXICO
+# =========================================================
+
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
+# =========================================================
+# TÍTULO
+# =========================================================
+
+st.header("Comercio exterior del sector prendas")
+
+st.write("""
+Este análisis compara el comportamiento de las exportaciones
+e importaciones de prendas en México entre 2018 y 2023.
+
+El objetivo es identificar posibles cambios en la balanza
+comercial y evaluar si el crecimiento de importaciones podría
+estar relacionado con la desaceleración de la confección nacional.
+""")
+
+# =========================================================
+# CARGAR EXPORTACIONES
+# =========================================================
+
+df_exp_raw = pd.read_excel(
+    "Matriz Volumen Anual Productos.xlsx",
+    header=None
+)
+
+# usar fila correcta como headers
+df_exp_raw.columns = df_exp_raw.iloc[2]
+
+# eliminar filas basura
+df_exp = df_exp_raw.iloc[3:].reset_index(drop=True)
+
+# conservar columnas necesarias
+df_exp = df_exp.iloc[:, :7]
+
+# renombrar columnas
+df_exp.columns = [
+    "Categoria",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023"
+]
+
+# =========================================================
+# FILTRAR PRENDAS
+# categorías 61 y 62
+# =========================================================
+
+df_exp_filtrado = df_exp[
+    df_exp["Categoria"].astype(str).str.startswith(("61", "62"))
+].copy()
+
+# =========================================================
+# CONVERTIR A NUMÉRICO
+# =========================================================
+
+años = ["2018", "2019", "2020", "2021", "2022", "2023"]
+
+for año in años:
+    df_exp_filtrado[año] = pd.to_numeric(
+        df_exp_filtrado[año],
+        errors="coerce"
+    )
+
+# =========================================================
+# SUMAR EXPORTACIONES
+# =========================================================
+
+exportaciones = []
+
+for año in años:
+    total = df_exp_filtrado[año].sum()
+    exportaciones.append(total)
+
+df_exportaciones = pd.DataFrame({
+    "Año": años,
+    "Exportaciones": exportaciones
+})
+
+# =========================================================
+# CARGAR IMPORTACIONES
+# =========================================================
+
+df_imp_raw = pd.read_excel(
+    "CE Volumen Producto Anual.xlsx",
+    header=None
+)
+
+# usar fila correcta como headers
+df_imp_raw.columns = df_imp_raw.iloc[2]
+
+# eliminar filas basura
+df_imp = df_imp_raw.iloc[3:].reset_index(drop=True)
+
+# conservar columnas necesarias
+df_imp = df_imp.iloc[:, :7]
+
+# renombrar columnas
+df_imp.columns = [
+    "Categoria",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023"
+]
+
+# =========================================================
+# FILTRAR PRENDAS
+# =========================================================
+
+df_imp_filtrado = df_imp[
+    df_imp["Categoria"].astype(str).str.startswith(("61", "62"))
+].copy()
+
+# =========================================================
+# CONVERTIR A NUMÉRICO
+# =========================================================
+
+for año in años:
+    df_imp_filtrado[año] = pd.to_numeric(
+        df_imp_filtrado[año],
+        errors="coerce"
+    )
+
+# =========================================================
+# SUMAR IMPORTACIONES
+# =========================================================
+
+importaciones = []
+
+for año in años:
+    total = df_imp_filtrado[año].sum()
+    importaciones.append(total)
+
+df_importaciones = pd.DataFrame({
+    "Año": años,
+    "Importaciones": importaciones
+})
+
+# =========================================================
+# UNIR DATAFRAMES
+# =========================================================
+
+df_comparativa = pd.merge(
+    df_exportaciones,
+    df_importaciones,
+    on="Año"
+)
+
+# =========================================================
+# CALCULAR BALANZA
+# =========================================================
+
+df_comparativa["Balanza"] = (
+    df_comparativa["Exportaciones"]
+    - df_comparativa["Importaciones"]
+)
+
+# =========================================================
+# KPI PRINCIPAL
+# =========================================================
+
+balanza_2023 = round(
+    df_comparativa.loc[
+        df_comparativa["Año"] == "2023",
+        "Balanza"
+    ].values[0] / 1_000_000,
+    1
+)
+
+crecimiento_importaciones = round(
+    (
+        (
+            df_comparativa["Importaciones"].iloc[-1]
+            /
+            df_comparativa["Importaciones"].iloc[0]
+        ) - 1
+    ) * 100,
+    1
+)
+
+st.subheader("Insight clave")
+
+st.metric(
+    label="Balanza comercial 2023 (millones)",
+    value=f"{balanza_2023} M",
+)
+
+st.write(f"""
+Las importaciones crecieron aproximadamente
+**{crecimiento_importaciones}%**
+entre 2018 y 2023.
+
+El crecimiento de importaciones fue superior al de exportaciones,
+lo que amplió la brecha comercial del sector prendas.
+""")
+
+# =========================================================
+# GRÁFICA EXPORTACIONES VS IMPORTACIONES
+# =========================================================
+
+st.subheader("Exportaciones vs importaciones")
+
+fig = px.line(
+    df_comparativa,
+    x="Año",
+    y=["Exportaciones", "Importaciones"],
+    markers=True,
+    title="Exportaciones vs Importaciones de prendas en México"
+)
+
+fig.update_layout(
+    template="plotly_dark",
+    xaxis_title="Año",
+    yaxis_title="Valor comercial"
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# =========================================================
+# GRÁFICA BALANZA COMERCIAL
+# =========================================================
+
+st.subheader("Balanza comercial")
+
+fig2 = px.bar(
+    df_comparativa,
+    x="Año",
+    y="Balanza",
+    title="Balanza comercial del sector prendas"
+)
+
+fig2.update_layout(
+    template="plotly_dark",
+    xaxis_title="Año",
+    yaxis_title="Balanza"
+)
+
+st.plotly_chart(fig2, use_container_width=True)
+
+# =========================================================
+# TABLA RESUMIDA
+# =========================================================
+
+st.subheader("Datos resumidos")
+
+tabla = df_comparativa.copy()
+
+tabla["Exportaciones"] = (
+    tabla["Exportaciones"] / 1_000_000
+).round(1)
+
+tabla["Importaciones"] = (
+    tabla["Importaciones"] / 1_000_000
+).round(1)
+
+tabla["Balanza"] = (
+    tabla["Balanza"] / 1_000_000
+).round(1)
+
+st.dataframe(
+    tabla,
+    use_container_width=True
+)
+
+# =========================================================
+# INTERPRETACIÓN
+# =========================================================
+
+st.header("Interpretación")
+
+st.subheader("Hallazgos principales")
+
+st.markdown("""
+- Las importaciones crecieron de manera acelerada después de 2020.
+- Las exportaciones también aumentaron, pero a menor ritmo.
+- La brecha comercial del sector prendas se amplió entre 2021 y 2023.
+- La confección nacional permanece por debajo de niveles prepandemia.
+""")
+
+st.subheader("Posibles implicaciones")
+
+st.markdown("""
+- mayor dependencia de prendas importadas
+- presión competitiva internacional
+- crecimiento del fast fashion
+- posible sustitución de producción nacional
+- debilitamiento del sector confección
+""")
+
 
