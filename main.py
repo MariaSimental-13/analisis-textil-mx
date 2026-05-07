@@ -18,20 +18,27 @@ st.title("Análisis de la industria de confección en México (2018–2023)")
 st.markdown("""
 ### Insight clave
 
-En 2023, la producción de confección sigue aproximadamente **19% por debajo** de los niveles pre-pandemia (2019).
+En 2023, la industria de confección en México permanece aproximadamente **19% por debajo** de los niveles observados antes de la pandemia (2019).
 
-Esto sugiere una recuperación incompleta del sector.
+Aunque el sector mostró una recuperación parcial después de 2020, el comportamiento reciente sugiere una desaceleración estructural y una recuperación menos sólida frente a otras actividades manufactureras.
 """)
 
 # =========================
 # 4. CARGA Y LIMPIEZA DE DATOS
 # =========================
-df_conf = pd.read_excel("Indicadores20260503191827.xls", header=None, engine="xlrd")
+df_conf = pd.read_excel(
+    "Indicadores20260503191827.xls",
+    header=None,
+    engine="xlrd"
+)
 
 df_conf.columns = df_conf.iloc[5]
 df_conf = df_conf[6:].reset_index(drop=True)
 
-df_conf = df_conf[df_conf["Indicador"].str.contains("prendas", na=False)]
+df_conf = df_conf[
+    df_conf["Indicador"].str.contains("prendas", na=False)
+]
+
 df_conf = df_conf.iloc[[0]]
 
 # =========================
@@ -43,10 +50,18 @@ df_conf_long = df_conf.melt(
     value_name="Indice"
 )
 
-df_conf_long["Indice"] = pd.to_numeric(df_conf_long["Indice"], errors="coerce")
+df_conf_long["Indice"] = pd.to_numeric(
+    df_conf_long["Indice"],
+    errors="coerce"
+)
+
 df_conf_long = df_conf_long.dropna(subset=["Indice"])
 
-df_conf_long["Año"] = df_conf_long["Fecha"].str[:4].astype(int)
+df_conf_long["Año"] = (
+    df_conf_long["Fecha"]
+    .str[:4]
+    .astype(int)
+)
 
 # =========================
 # 6. AGREGACIÓN
@@ -62,14 +77,35 @@ df_conf_trend = (
 # 7. TABLA FINAL
 # =========================
 df_tabla = df_conf_trend.copy()
-df_tabla["Indice"] = df_tabla["Indice"].round(1)
 
-df_tabla["YoY %"] = df_tabla["Indice"].pct_change() * 100
-df_tabla["YoY %"] = df_tabla["YoY %"].round(1)
+df_tabla["Indice"] = (
+    df_tabla["Indice"]
+    .round(1)
+)
 
-base_2019 = df_tabla.loc[df_tabla["Año"] == 2019, "Indice"].values[0]
-df_tabla["Index 2019=100"] = (df_tabla["Indice"] / base_2019) * 100
-df_tabla["Index 2019=100"] = df_tabla["Index 2019=100"].round(1)
+df_tabla["YoY %"] = (
+    df_tabla["Indice"]
+    .pct_change() * 100
+)
+
+df_tabla["YoY %"] = (
+    df_tabla["YoY %"]
+    .round(1)
+)
+
+base_2019 = df_tabla.loc[
+    df_tabla["Año"] == 2019,
+    "Indice"
+].values[0]
+
+df_tabla["Index 2019=100"] = (
+    df_tabla["Indice"] / base_2019
+) * 100
+
+df_tabla["Index 2019=100"] = (
+    df_tabla["Index 2019=100"]
+    .round(1)
+)
 
 # =========================
 # 8. KPI
@@ -97,7 +133,11 @@ st.plotly_chart(fig, use_container_width=True)
 # 10. TABLA
 # =========================
 st.subheader("Datos resumidos")
-st.dataframe(df_tabla, use_container_width=True)
+
+st.dataframe(
+    df_tabla,
+    use_container_width=True
+)
 
 # =========================
 # 11. INTERPRETACIÓN FINAL
@@ -105,52 +145,37 @@ st.dataframe(df_tabla, use_container_width=True)
 st.markdown("""
 ### Interpretación
 
-Aunque hubo una recuperación en 2021 y 2022, el sector no ha logrado regresar a niveles pre-pandemia.
+Después de la caída observada en 2020, la confección mexicana registró una recuperación parcial durante 2021 y 2022. Sin embargo, en 2023 el sector continúa por debajo de los niveles previos a la pandemia.
 
-Esto podría estar relacionado con:
+El comportamiento podría estar asociado con factores como:
 
-- aumento en importaciones de prendas
-- cambios en la cadena global de suministro
-- crecimiento del fast fashion
+- incremento de importaciones de prendas
+- cambios en las cadenas globales de suministro
+- expansión del fast fashion
+- presión competitiva internacional
 
-El comportamiento sugiere una posible **debilidad estructural** en la industria de confección en México.
+En conjunto, los datos sugieren una posible pérdida de competitividad en la industria nacional de confección.
 """)
-# ==============================
-# 1. IMPORTS
-# ==============================
 
-import pandas as pd
-import plotly.express as px
-import streamlit as st
+# =========================================================
+# =========================================================
+# ANÁLISIS TEXTIL VS CONFECCIÓN
+# =========================================================
+# =========================================================
 
-# ==============================
-# 2. CONFIG DASHBOARD
-# ==============================
-
-st.set_page_config(
-    page_title="Industria Textil México",
-    layout="wide"
-)
-
-# ==============================
-# 3. TÍTULO
-# ==============================
-
-st.title("Análisis de la industria textil (2018–2024)")
+st.title("Análisis de la industria textil (2018–2023)")
 
 st.markdown("""
-Este análisis compara el comportamiento de:
+Este análisis compara la evolución de dos segmentos clave de la industria textil mexicana:
 
 - Manufactura textil (SCIAN 313)
 - Confección de prendas
 
-El objetivo es identificar si ambos sectores se recuperaron de manera similar después de la pandemia.
+El objetivo es evaluar si ambos sectores mostraron patrones de recuperación similares después de la pandemia y detectar posibles diferencias estructurales dentro de la cadena productiva.
 """)
 
 # =========================================================
-# =========================================================
-# 4. DATOS CONFECCIÓN
-# =========================================================
+# DATOS CONFECCIÓN
 # =========================================================
 
 df_conf = pd.read_excel(
@@ -158,29 +183,23 @@ df_conf = pd.read_excel(
     header=None
 )
 
-# headers
 df_conf.columns = df_conf.iloc[5]
 
-# eliminar basura
 df_conf = df_conf[6:]
 df_conf = df_conf.reset_index(drop=True)
 
-# filtrar confección
 df_conf = df_conf[
     df_conf["Indicador"].str.contains("prendas", na=False)
 ]
 
-# tomar primera fila
 df_conf = df_conf.iloc[[0]]
 
-# formato largo
 df_conf_long = df_conf.melt(
     id_vars=["Indicador", "Área geográfica"],
     var_name="Fecha",
     value_name="Indice"
 )
 
-# limpiar
 df_conf_long["Indice"] = pd.to_numeric(
     df_conf_long["Indice"],
     errors="coerce"
@@ -188,14 +207,12 @@ df_conf_long["Indice"] = pd.to_numeric(
 
 df_conf_long = df_conf_long.dropna(subset=["Indice"])
 
-# año
 df_conf_long["Año"] = (
     df_conf_long["Fecha"]
     .str[:4]
     .astype(int)
 )
 
-# agrupar
 df_conf_trend = (
     df_conf_long
     .groupby("Año")["Indice"]
@@ -205,7 +222,6 @@ df_conf_trend = (
 
 df_conf_trend = df_conf_trend.sort_values("Año")
 
-# YoY
 df_conf_trend["YoY %"] = (
     df_conf_trend["Indice"]
     .pct_change() * 100
@@ -216,7 +232,6 @@ df_conf_trend["YoY %"] = (
     .round(1)
 )
 
-# index 2019 = 100
 base_2019 = df_conf_trend.loc[
     df_conf_trend["Año"] == 2019,
     "Indice"
@@ -232,9 +247,7 @@ df_conf_trend["Index 2019=100"] = (
 )
 
 # =========================================================
-# =========================================================
-# 5. DATOS MANUFACTURA TEXTIL
-# =========================================================
+# DATOS MANUFACTURA TEXTIL
 # =========================================================
 
 df_textil = pd.read_excel(
@@ -242,7 +255,6 @@ df_textil = pd.read_excel(
     header=None
 )
 
-# headers
 header_years = df_textil.iloc[5]
 header_months = df_textil.iloc[6]
 
@@ -257,11 +269,9 @@ for y, m in zip(header_years, header_months):
 
 df_textil.columns = columns
 
-# limpiar
 df_textil = df_textil.iloc[7:]
 df_textil = df_textil.reset_index(drop=True)
 
-# melt
 df_textil_long = df_textil.melt(
     id_vars=[
         "Variable_Variable",
@@ -272,7 +282,6 @@ df_textil_long = df_textil.melt(
     value_name="Produccion"
 )
 
-# numeric
 df_textil_long["Produccion"] = pd.to_numeric(
     df_textil_long["Produccion"],
     errors="coerce"
@@ -282,7 +291,6 @@ df_textil_long = df_textil_long.dropna(
     subset=["Produccion"]
 )
 
-# año
 df_textil_long[["Año", "Mes"]] = (
     df_textil_long["Fecha"]
     .str.split("_", expand=True)
@@ -293,12 +301,10 @@ df_textil_long["Año"] = (
     .astype(int)
 )
 
-# solo hasta 2024
 df_textil_clean = df_textil_long[
     df_textil_long["Año"] <= 2023
 ]
 
-# agrupar
 df_textil_trend = (
     df_textil_clean
     .groupby("Año")["Produccion"]
@@ -306,7 +312,6 @@ df_textil_trend = (
     .reset_index()
 )
 
-# normalizar base 2019
 base_textil_2019 = df_textil_trend.loc[
     df_textil_trend["Año"] == 2019,
     "Produccion"
@@ -323,7 +328,7 @@ df_textil_trend["Index 2019=100"] = (
 )
 
 # =========================================================
-# 6. INSIGHT PRINCIPAL
+# INSIGHT PRINCIPAL
 # =========================================================
 
 st.header("Insight clave")
@@ -337,14 +342,13 @@ st.metric(
 )
 
 st.markdown("""
-La confección mexicana sigue por debajo de los niveles pre-pandemia.
+La confección mexicana continúa por debajo de los niveles observados antes de la pandemia.
 
-Esto podría indicar una recuperación incompleta del sector,
-a diferencia de otras áreas manufactureras.
+A diferencia de la manufactura textil, la recuperación del sector confección ha sido más lenta e inestable, lo que podría reflejar una pérdida de dinamismo en el producto final dentro de la cadena textil nacional.
 """)
 
 # =========================================================
-# 7. GRÁFICA CONFECCIÓN
+# GRÁFICA CONFECCIÓN
 # =========================================================
 
 st.header("Evolución del índice de confección")
@@ -363,7 +367,7 @@ st.plotly_chart(
 )
 
 # =========================================================
-# 8. GRÁFICA TEXTIL
+# GRÁFICA TEXTIL
 # =========================================================
 
 st.header("Evolución manufactura textil")
@@ -382,7 +386,7 @@ st.plotly_chart(
 )
 
 # =========================================================
-# 9. COMPARATIVA
+# COMPARATIVA
 # =========================================================
 
 st.header("Comparativa textil vs confección")
@@ -414,7 +418,7 @@ st.plotly_chart(
 )
 
 # =========================================================
-# 10. TABLAS
+# TABLAS
 # =========================================================
 
 st.header("Datos resumidos")
@@ -440,7 +444,7 @@ with col2:
     )
 
 # =========================================================
-# 11. INTERPRETACIÓN
+# INTERPRETACIÓN
 # =========================================================
 
 st.header("Interpretación")
@@ -448,46 +452,40 @@ st.header("Interpretación")
 st.markdown("""
 ## Hallazgos principales
 
-- La manufactura textil muestra una recuperación más estable.
-- La confección permanece por debajo de niveles pre-pandemia.
-- Existe una posible desconexión entre producción de insumos y producto final.
+- La manufactura textil mostró una recuperación más sólida después de 2020.
+- La confección de prendas continúa rezagada frente a niveles pre-pandemia.
+- Existe una posible desconexión entre la producción de insumos textiles y el desempeño del producto final.
 
-## Posibles causas
+## Posibles factores explicativos
 
-- aumento de importaciones
-- crecimiento del fast fashion
-- competencia internacional
-- cambios en consumo post-pandemia
-- pérdida de competitividad industrial
+- crecimiento acelerado de importaciones de prendas
+- expansión del modelo fast fashion
+- presión competitiva internacional
+- cambios en los patrones de consumo post-pandemia
+- pérdida de competitividad en confección nacional
 
+## Implicaciones potenciales
+
+La diferencia entre ambos sectores podría indicar que parte de la recuperación manufacturera no se está traduciendo en mayor producción nacional de prendas terminadas.
+
+Esto podría aumentar la dependencia de productos importados y debilitar la participación de la confección mexicana dentro del mercado interno.
 """)
+
 # =========================================================
 # COMERCIO EXTERIOR
 # EXPORTACIONES VS IMPORTACIONES
-# INDUSTRIA DE PRENDAS EN MÉXICO
-# =========================================================
-
-import pandas as pd
-import plotly.express as px
-import streamlit as st
-
-# =========================================================
-# TÍTULO
 # =========================================================
 
 st.header("Comercio exterior del sector prendas")
 
 st.write("""
-Este análisis compara el comportamiento de las exportaciones
-e importaciones de prendas en México entre 2018 y 2023.
+Este análisis evalúa la evolución de las exportaciones e importaciones de prendas en México entre 2018 y 2023.
 
-El objetivo es identificar posibles cambios en la balanza
-comercial y evaluar si el crecimiento de importaciones podría
-estar relacionado con la desaceleración de la confección nacional.
+El objetivo es identificar cambios en la balanza comercial del sector y analizar si el crecimiento acelerado de las importaciones podría estar relacionado con el debilitamiento relativo de la confección nacional.
 """)
 
 # =========================================================
-# CARGAR EXPORTACIONES
+# EXPORTACIONES
 # =========================================================
 
 df_exp_raw = pd.read_excel(
@@ -495,16 +493,12 @@ df_exp_raw = pd.read_excel(
     header=None
 )
 
-# usar fila correcta como headers
 df_exp_raw.columns = df_exp_raw.iloc[2]
 
-# eliminar filas basura
 df_exp = df_exp_raw.iloc[3:].reset_index(drop=True)
 
-# conservar columnas necesarias
 df_exp = df_exp.iloc[:, :7]
 
-# renombrar columnas
 df_exp.columns = [
     "Categoria",
     "2018",
@@ -515,34 +509,23 @@ df_exp.columns = [
     "2023"
 ]
 
-# =========================================================
-# FILTRAR PRENDAS
-# categorías 61 y 62
-# =========================================================
-
 df_exp_filtrado = df_exp[
     df_exp["Categoria"].astype(str).str.startswith(("61", "62"))
 ].copy()
 
-# =========================================================
-# CONVERTIR A NUMÉRICO
-# =========================================================
-
 años = ["2018", "2019", "2020", "2021", "2022", "2023"]
 
 for año in años:
+
     df_exp_filtrado[año] = pd.to_numeric(
         df_exp_filtrado[año],
         errors="coerce"
     )
 
-# =========================================================
-# SUMAR EXPORTACIONES
-# =========================================================
-
 exportaciones = []
 
 for año in años:
+
     total = df_exp_filtrado[año].sum()
     exportaciones.append(total)
 
@@ -552,7 +535,7 @@ df_exportaciones = pd.DataFrame({
 })
 
 # =========================================================
-# CARGAR IMPORTACIONES
+# IMPORTACIONES
 # =========================================================
 
 df_imp_raw = pd.read_excel(
@@ -560,16 +543,12 @@ df_imp_raw = pd.read_excel(
     header=None
 )
 
-# usar fila correcta como headers
 df_imp_raw.columns = df_imp_raw.iloc[2]
 
-# eliminar filas basura
 df_imp = df_imp_raw.iloc[3:].reset_index(drop=True)
 
-# conservar columnas necesarias
 df_imp = df_imp.iloc[:, :7]
 
-# renombrar columnas
 df_imp.columns = [
     "Categoria",
     "2018",
@@ -580,31 +559,21 @@ df_imp.columns = [
     "2023"
 ]
 
-# =========================================================
-# FILTRAR PRENDAS
-# =========================================================
-
 df_imp_filtrado = df_imp[
     df_imp["Categoria"].astype(str).str.startswith(("61", "62"))
 ].copy()
 
-# =========================================================
-# CONVERTIR A NUMÉRICO
-# =========================================================
-
 for año in años:
+
     df_imp_filtrado[año] = pd.to_numeric(
         df_imp_filtrado[año],
         errors="coerce"
     )
 
-# =========================================================
-# SUMAR IMPORTACIONES
-# =========================================================
-
 importaciones = []
 
 for año in años:
+
     total = df_imp_filtrado[año].sum()
     importaciones.append(total)
 
@@ -614,7 +583,7 @@ df_importaciones = pd.DataFrame({
 })
 
 # =========================================================
-# UNIR DATAFRAMES
+# COMPARATIVA
 # =========================================================
 
 df_comparativa = pd.merge(
@@ -623,17 +592,13 @@ df_comparativa = pd.merge(
     on="Año"
 )
 
-# =========================================================
-# CALCULAR BALANZA
-# =========================================================
-
 df_comparativa["Balanza"] = (
     df_comparativa["Exportaciones"]
     - df_comparativa["Importaciones"]
 )
 
 # =========================================================
-# KPI PRINCIPAL
+# KPI
 # =========================================================
 
 balanza_2023 = round(
@@ -663,12 +628,11 @@ st.metric(
 )
 
 st.write(f"""
-Las importaciones crecieron aproximadamente
-**{crecimiento_importaciones}%**
-entre 2018 y 2023.
+Entre 2018 y 2023, las importaciones de prendas crecieron aproximadamente **{crecimiento_importaciones}%**.
 
-El crecimiento de importaciones fue superior al de exportaciones,
-lo que amplió la brecha comercial del sector prendas.
+Aunque las exportaciones también aumentaron durante el periodo, el crecimiento de las importaciones fue considerablemente mayor, ampliando el déficit comercial del sector prendas.
+
+La aceleración observada después de 2021 podría estar relacionada con una mayor dependencia de productos importados dentro del mercado nacional.
 """)
 
 # =========================================================
@@ -694,7 +658,7 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # =========================================================
-# GRÁFICA BALANZA COMERCIAL
+# BALANZA
 # =========================================================
 
 st.subheader("Balanza comercial")
@@ -715,7 +679,7 @@ fig2.update_layout(
 st.plotly_chart(fig2, use_container_width=True)
 
 # =========================================================
-# TABLA RESUMIDA
+# TABLA
 # =========================================================
 
 st.subheader("Datos resumidos")
@@ -740,7 +704,7 @@ st.dataframe(
 )
 
 # =========================================================
-# INTERPRETACIÓN
+# INTERPRETACIÓN FINAL
 # =========================================================
 
 st.header("Interpretación")
@@ -748,20 +712,19 @@ st.header("Interpretación")
 st.subheader("Hallazgos principales")
 
 st.markdown("""
-- Las importaciones crecieron de manera acelerada después de 2020.
-- Las exportaciones también aumentaron, pero a menor ritmo.
-- La brecha comercial del sector prendas se amplió entre 2021 y 2023.
-- La confección nacional permanece por debajo de niveles prepandemia.
+- Las importaciones mostraron una aceleración significativa después de 2020.
+- Las exportaciones crecieron durante el mismo periodo, aunque a menor ritmo.
+- El déficit comercial del sector prendas se amplió de forma importante entre 2021 y 2023.
+- La confección nacional continúa por debajo de niveles pre-pandemia.
+- El comportamiento comercial coincide con el rezago observado en la producción nacional de prendas.
 """)
 
 st.subheader("Posibles implicaciones")
 
 st.markdown("""
-- mayor dependencia de prendas importadas
-- presión competitiva internacional
-- crecimiento del fast fashion
-- posible sustitución de producción nacional
-- debilitamiento del sector confección
+- mayor dependencia del mercado nacional respecto a prendas importadas
+- incremento de la presión competitiva internacional
+- expansión del modelo fast fashion
+- posible sustitución de producción nacional por importaciones
+- pérdida de competitividad en la confección mexicana
 """)
-
-
